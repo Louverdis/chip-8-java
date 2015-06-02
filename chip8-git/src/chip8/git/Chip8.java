@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import java.util.function.IntConsumer;
 
@@ -82,7 +83,7 @@ public class Chip8 {
     public boolean drawFlag;
 
     // Arreglo de referencias de funciones
-    final private IntConsumer tablaChip8[] = {
+    final private CicloChip8 tablaChip8[] = {
         this::ejecutar00E0, this::ejecutar1NNN, this::ejecutar2NNN,
         this::ejecutar3XNN, this::ejecutar4XNN, this::ejecutar5XY0,
         this::ejecutar6XNN, this::ejecutar7XNN, this::ejecutar8XY0,
@@ -91,13 +92,15 @@ public class Chip8 {
         this::ejecutarFX07, this::opcodeUndefined
     };
 
-    final private IntConsumer tablaAritmeticaChip8[] = {
+    final private CicloChip8 tablaAritmeticaChip8[] = {
         this::ejecutar8XY0, this::ejecutar8XY1, this::ejecutar8XY2,
         this::ejecutar8XY3, this::ejecutar8XY4, this::ejecutar8XY5,
         this::ejecutar8XY6, this::ejecutar8XY7, this::opcodeUndefined,
         this::opcodeUndefined, this::opcodeUndefined, this::opcodeUndefined,
         this::opcodeUndefined, this::opcodeUndefined, this::ejecutar8XYE
     };
+    
+    //private Map<Integer, CicloChip8> opcodeFxMap = new Map();
 
     /****************************************************************
     * Funciones principales del Chip8
@@ -119,10 +122,10 @@ public class Chip8 {
         for(int i = 0; i < 80; i++)
             memory[i] = chipFontset[i];
 
-        pc = 0x200; // Los programas en el Chip-8 inician en esta direccion
-        I = 0;      // Reset del indice
-        opcode = 0; // Reset del opcode actual
-        sp = 0;     // Reset del stack pointer
+        pc = 0x200;    // Los programas en el Chip-8 inician en esta direccion
+        I = 0;         // Reset del indice
+        opcode = null; // Reset del opcode actual
+        sp = 0;        // Reset del stack pointer
 
         delayTimer = 0; // Reset de timers
         soundTimer = 0;
@@ -154,7 +157,7 @@ public class Chip8 {
         String assembly = "NONE";
 
         // Desifrar opcode
-        opcode = Opcode(i_opcode);
+        opcode = new Opcode(i_opcode);
 
         /******************************
         * Estructura del Opcode:
@@ -563,77 +566,77 @@ public class Chip8 {
     * Grupo de funciones privadas encargadas de la ejecucion de
     *  los Opcodes durante cada ciclo de emulacion.
     ****************************************************************/
-    private void opcodeUndefined(int op){
+    private void opcodeUndefined(){
         // ejecucion para los opcodes no identificados
     }
 
-    private void ejecutar00E0(int op){}
+    private void ejecutar00E0(){}
 
-    private void ejecutar00EE(int op){}
+    private void ejecutar00EE(){}
 
-    private void ejecutar1NNN(int op){}
+    private void ejecutar1NNN(){}
 
-    private void ejecutar2NNN(int op){}
+    private void ejecutar2NNN(){}
 
-    private void ejecutar3XNN(int op){}
+    private void ejecutar3XNN(){}
 
-    private void ejecutar4XNN(int op){}
+    private void ejecutar4XNN(){}
 
-    private void ejecutar5XY0(int op){}
+    private void ejecutar5XY0(){}
 
-    private void ejecutar6XNN(int op){}
+    private void ejecutar6XNN(){}
 
-    private void ejecutar7XNN(int op){}
+    private void ejecutar7XNN(){}
 
-    private void ejecutar8XY0(int op){}
+    private void ejecutar8XY0(){}
 
-    private void ejecutar8XY1(int op){}
+    private void ejecutar8XY1(){}
 
-    private void ejecutar8XY2(int op){}
+    private void ejecutar8XY2(){}
 
-    private void ejecutar8XY3(int op){}
+    private void ejecutar8XY3(){}
 
-    private void ejecutar8XY4(int op){}
+    private void ejecutar8XY4(){}
 
-    private void ejecutar8XY5(int op){}
+    private void ejecutar8XY5(){}
 
-    private void ejecutar8XY6(int op){}
+    private void ejecutar8XY6(){}
 
-    private void ejecutar8XY7(int op){}
+    private void ejecutar8XY7(){}
 
-    private void ejecutar8XYE(int op){}
+    private void ejecutar8XYE(){}
 
-    private void ejecutar9XY0(int op){}
+    private void ejecutar9XY0(){}
 
-    private void ejecutarANNN(int op){}
+    private void ejecutarANNN(){}
 
-    private void ejecutarBNNN(int op){}
+    private void ejecutarBNNN(){}
 
-    private void ejecutarCXNN(int op){}
+    private void ejecutarCXNN(){}
 
-    private void ejecutarDXYN(int op){}
+    private void ejecutarDXYN(){}
 
-    private void ejecutarEX9E(int op){}
+    private void ejecutarEX9E(){}
 
-    private void ejecutarEXA1(int op){}
+    private void ejecutarEXA1(){}
 
-    private void ejecutarFX07(int op){}
+    private void ejecutarFX07(){}
 
-    private void ejecutarFX0A(int op){}
+    private void ejecutarFX0A(){}
 
-    private void ejecutarFX15(int op){}
+    private void ejecutarFX15(){}
 
-    private void ejecutarFX18(int op){}
+    private void ejecutarFX18(){}
 
-    private void ejecutarFX1E(int op){}
+    private void ejecutarFX1E(){}
 
-    private void ejecutarFX29(int op){}
+    private void ejecutarFX29(){}
 
-    private void ejecutarFX33(int op){}
+    private void ejecutarFX33(){}
 
-    private void ejecutarFX55(int op){}
+    private void ejecutarFX55(){}
 
-    private void ejecutarFX65(int op){}
+    private void ejecutarFX65(){}
 
 
     /*******************************************************************

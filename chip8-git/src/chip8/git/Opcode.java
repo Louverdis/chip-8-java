@@ -28,8 +28,8 @@ public class Opcode {
 
     // Componente X
     public int vx;
-    iOpcode & 0x00FF;
-    // Componente Y
+    
+// Componente Y
     public int vy;
 
     // Atributos para representacion en texto
