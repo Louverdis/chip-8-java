@@ -22,7 +22,27 @@ public class Chip8 {
     * 0x050 - 0x0A0 -> Used for the built in 4x5 pixel font set (0-F)
     * 0x200 - 0xFFF -> Program ROM and work RAM
     **************************/
-
+    
+    // Font set del Chip-8. Cada numero/caracter es 4x5 unidades
+    final private int chipFontset[] = { 
+        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+        0x20, 0x60, 0x20, 0x20, 0x70, // 1
+        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+        0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+        0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+    };
+    
     // Memoria del el chip: 0x1000 memory locations (4k)
     final private int memory[] = new int[4096];
 
@@ -60,25 +80,31 @@ public class Chip8 {
     public boolean drawFlag;
 
     public void init(){
-        for (int i: memory)
-            i = 0; // Pendiente cargar fontset
+        // Reset de memoria
+        for(int i: memory) i = 0; 
 
-        for (int i: V)
-            i = 0;
+        // Reset de registros
+        for(int i: V) i = 0;
 
-        for (int i: gfx)
-            i = 0;
+        // Reset de graficas
+        for(int i: gfx) i = 0;
 
-        for (int i: stack)
-            i = 0;
-
-        I = 0;
-        opcode = 0;
+        // Reset del Stacl
+        for(int i: stack) i = 0;
+        
+        // Carga del fontSet a memoria
+        for(int i = 0; i < 80; i++)
+            memory[i] = chipFontset[i];	
+        
         pc = 0x200; // Los programas en el Chip-8 inician en esta direccion
-        delayTimer = 0;
+        I = 0;      // Reset del indice
+        opcode = 0; // Reset del opcode actual
+        sp = 0;     // Reset del stack pointer
+        
+        delayTimer = 0; // Reset de timers
         soundTimer = 0;
-        sp = 0;
-        drawFlag = false;
+        
+        drawFlag = true; // Se marca para actualizar vista
     }
 
     public void cargarJuego(String juego) throws IOException{
