@@ -19,12 +19,17 @@ public class Main {
         Chip8 myChip = new Chip8();
         myChip.init();
         try {
-            myChip.cargarJuego("invaders.c8");
+            myChip.cargarJuego("pong2.c8");
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         myChip.imprimirMemoria();
+
+        System.out.println("\n\nDisassembly del programa c8");
+        while(myChip.get_pc() < 4096){
+            myChip.emularCiclo();
+        }
     }
-    
+
 }

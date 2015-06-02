@@ -95,22 +95,48 @@ public class Chip8 {
     public void emularCiclo(){
         // Obtener opcode: Compuesto de dos bytes, empezando desde 0x200
         int i_opcode = (memory[pc] << 8) | memory[pc+1];
+        if (i_opcode == 0){
+            pc += 2;
+            return;
+        }
+
+        // Variable temporal para armar la representacion en string del
+        // opcode traducido a assembly
+        String assembly = "NONE";
 
         // Desifrar opcode
         //opcode = descifrarOpcode(i_opcode);
+
+        /******************************
+        * Estructura del Opcode:
+        *  NNN: address
+        *  KK:  8-bit constant (byte)
+        *  N:   4-bit constant (nibble)
+        *  X,Y: 4-bit register identifier
+        *************************************/
+
+        // Direccion, byte y nibble
+        int nnn, kk, n;
+        // identificadores de registros
+        int x, y;
+
         switch (i_opcode & 0xF000) {
             case 0x0000:
                 // Existen dos Opcodes que empiezan con 0x00
                 switch (i_opcode & 0x000F) {
                     case 0x0000:
                         // 00E0 - CLS
+                        nnn = kk = n = x = y = 0;
+                        assembly = "CLS";
                         break;
 
                     case 0x000E:
                         // 00EE - RET
+                        nnn = kk = n = x = y = 0;
+                        assembly = "RET";
                         break;
 
-                    case default:
+                    default:
                         System.out.println(
                             "Opcode desconocido: "+
                             String.format("0x%04X", i_opcode)
@@ -121,30 +147,66 @@ public class Chip8 {
 
             case 0x1000:
                 // 1nnn - JP addr
+                kk = n = x = y = 0;
+                nnn = i_opcode & 0x0FFF;
+                assembly = "JP "+nnn;
                 break;
 
             case 0x2000:
                 // 2nnn - CALL addr
+                kk = n = x = y = 0;
+                nnn = i_opcode & 0x0FFF;
+                assembly = "CALL "+nnn;
                 break;
 
             case 0x3000:
                 // 3xkk - SE Vx, byte
+                nnn = n = y = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                kk = i_opcode & 0x00FF;
+
+                assembly = "SE V"+x+" "+kk;
                 break;
 
             case 0x4000:
                 // 4xkk - SNE Vx, byte
+                nnn = n = y = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                kk = i_opcode & 0x00FF;
+
+                assembly = "SNE V"+x+" "+kk;
                 break;
 
             case 0x5000:
                 // 5xy0 - SE Vx, Vy
+                nnn = kk = n = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                y = (i_opcode & 0x00F0) >> 4;
+
+                assembly = "SE V"+x+" V"+y;
                 break;
 
             case 0x6000:
                 // 6xkk - LD Vx, byte
+                nnn = n = y = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                kk = i_opcode & 0x00FF;
+
+                assembly = "LD V"+x+" "+kk;
                 break;
 
             case 0x7000:
                 // 7xkk - ADD Vx, byte
+                nnn = n = y = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                kk = i_opcode & 0x00FF;
+
+                assembly = "ADD V"+x+" "+kk;
                 break;
 
             case 0x8000:
@@ -152,41 +214,95 @@ public class Chip8 {
                 switch (i_opcode & 0x000F) {
                     case 0x0000:
                         // 8xy0 - LD Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "LD V"+x+" V"+y;
                         break;
 
                     case 0x0001:
                         // 8xy1 - OR Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "OR V"+x+" V"+y;
                         break;
 
                     case 0x0002:
                         // 8xy2 - AND Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "AND V"+x+" V"+y;
                         break;
 
                     case 0x0003:
                         // 8xy3 - XOR Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "XOR V"+x+" V"+y;
                         break;
 
                     case 0x0004:
                         // 8xy4 - ADD Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "ADD V"+x+" V"+y;
                         break;
 
                     case 0x0005:
                         // 8xy5 - SUB Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "SUB V"+x+" V"+y;
                         break;
 
                     case 0x0006:
                         // 8xy6 - SHR Vx {, Vy}
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "SHR V"+x+" V"+y;
                         break;
 
                     case 0x0007:
                         // 8xy7 - SUBN Vx, Vy
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "SUBN V"+x+" V"+y;
                         break;
 
                     case 0x000E:
                         // 8xyE - SHL Vx {, Vy}
+                        nnn = kk = n = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+                        y = (i_opcode & 0x00F0) >> 4;
+
+                        assembly = "SHL V"+x+" V"+y;
                         break;
 
-                    case default:
+                    default:
                         System.out.println(
                             "Opcode desconocido: "+
                             String.format("0x%04X", i_opcode)
@@ -197,22 +313,51 @@ public class Chip8 {
 
             case 0x9000:
                 // 9xy0 - SNE Vx, Vy
+                nnn = kk = n = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                y = (i_opcode & 0x00F0) >> 4;
+
+                assembly = "SNE V"+x+" V"+y;
                 break;
 
             case 0xA000:
                 // Annn - LD I, addr
+                kk = n = x = y = 0;
+
+                nnn = i_opcode & 0x0FFF;
+
+                assembly = "LD I "+nnn;
                 break;
 
             case 0xB000:
                 // Bnnn - JP V0, addr
+                kk = n = x = y = 0;
+
+                nnn = i_opcode & 0x0FFF;
+
+                assembly = "JP V0 "+nnn;
                 break;
 
             case 0xC000:
                 // Cxkk - RND Vx, byte
+                nnn = n = y = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                kk = i_opcode & 0x00FF;
+
+                assembly = "RND V"+x+" "+kk;
                 break;
 
             case 0xD000:
                 // Dxyn - DRW Vx, Vy, nibble
+                nnn = kk = 0;
+
+                x = (i_opcode & 0x0F00) >> 8;
+                y = (i_opcode & 0x00F0) >> 4;
+                n = i_opcode & 0x000F;
+
+                assembly = "DRW V"+x+" V"+y+" "+n;
                 break;
 
             case 0xE000:
@@ -220,13 +365,23 @@ public class Chip8 {
                 switch (i_opcode & 0x00FF) {
                     case 0x009E:
                         // Ex9E - SKP Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "SKP V"+x;
                         break;
 
                     case 0x00A1:
                         // ExA1 - SKNP Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "SKNP V"+x;
                         break;
 
-                    case default:
+                    default:
                         System.out.println(
                             "Opcode desconocido: "+
                             String.format("0x%04X", i_opcode)
@@ -239,42 +394,87 @@ public class Chip8 {
                 // Existen 9 opcodes que empiezan con 0xFx
                 switch (i_opcode & 0x00FF) {
                     case 0x0007:
-                        //
+                        // Fx07 - LD Vx, DT
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD V"+x+" DT";
                         break;
 
                     case 0x000A:
-                        //
+                        // Fx0A - LD Vx, K
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD V"+x+" K";
                         break;
 
                     case 0x0015:
-                        //
+                        // Fx15 - LD DT, Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD DT V"+x;
                         break;
 
                     case 0x0018:
-                        //
+                        // Fx18 - LD ST, Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD ST V"+x;
                         break;
 
                     case 0x001E:
-                        //
+                        // Fx1E - ADD I, Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "ADD I, V"+x;
                         break;
 
                     case 0x0029:
-                        //
+                        // Fx29 - LD F, Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD F V"+x;
                         break;
 
                     case 0x0033:
-                        //
+                        // Fx33 - LD B, Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD B V"+x;
                         break;
 
                     case 0x0055:
-                        //
+                        // Fx55 - LD [I], Vx
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD I V"+x;
                         break;
 
                     case 0x0065:
-                        //
+                        // Fx65 - LD Vx, [I]
+                        nnn = kk = n = y = 0;
+
+                        x = (i_opcode & 0x0F00) >> 8;
+
+                        assembly = "LD V"+x+" I";
                         break;
 
-                    case default:
+                    default:
                         System.out.println(
                             "Opcode desconocido: "+
                             String.format("0x%04X", i_opcode)
@@ -284,7 +484,7 @@ public class Chip8 {
                 }
                 break;
 
-            case default:
+            default:
                 System.out.println(
                     "Opcode desconocido: "+
                     String.format("0x%04X", i_opcode)
@@ -294,6 +494,10 @@ public class Chip8 {
 
         // Ejecutar opcode
         //ejecutarOpcode(opcode);
+        //System.out.println(
+        //    String.fomat("Instruccion en 0x%04X: %s", pc, assembly)
+        //);
+        System.out.printf("Instruccion en 0x%04X: %s\n", pc, assembly);
 
         // Tras emular un ciclo, el pc debe moverse dos espacios
         // pues cada ciclo consume dos bytes.
@@ -301,9 +505,13 @@ public class Chip8 {
 
     }
 
-    private Opcode descifrarOpcode(int op){return null;}
+    public int get_pc(){
+        return pc;
+    }
 
-    private void ejecutarOpcode(Opcode opcode){}
+    //private Opcode descifrarOpcode(int op){return null;}
+
+    //private void ejecutarOpcode(Opcode opcode){}
 
     /* Funcion DEBUGG */
     public void imprimirMemoriaRaw(){
