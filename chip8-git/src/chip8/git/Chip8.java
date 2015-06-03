@@ -162,11 +162,11 @@ public class Chip8 {
 
         // Debugg: Imprimir en pantalla resultados
         // System.out.printf("Instruccion en 0x%04X: %s\n", pc, opcode.assembly);
-        // System.out.printf(
-        //     "\tEn base al opcode: %04X -- id: %s\n",
-        //     opcode.hex_opcode,
-        //     opcode.identificador
-        // );
+        System.out.printf(
+            "\tEn base al opcode: %04X -- id: %s\n",
+            opcode.hex_opcode,
+            opcode.identificador
+        );
     }
 
     private void actualizarTimers(){
@@ -274,7 +274,10 @@ public class Chip8 {
         opcode.assembly = "CLS";
 
         // Limpiado de pantalla
-        for(int i: gfx) i = 0;
+        for(int i = 0; i < 2048; i++){
+            gfx[i] = 0x0;
+        }
+        //for(int i: gfx) i = 0;
         drawFlag = true;
         pc += 2;
     }
@@ -503,7 +506,7 @@ public class Chip8 {
             V[0xF] = 1;
 
         int resta = V[opcode.vx] - V[opcode.vy];
-        V[opcode.vx] = resta & 0xFF;
+        V[opcode.vx] = (resta & 0xFF);
         pc += 2;
     }
 
@@ -731,14 +734,13 @@ public class Chip8 {
 
         boolean keyPressed = false;
 
-        for(int i: key){
-            if(i != 0){
+        for(int i = 0; i < 16; i++){
+            if(key[i] != 0){
                 V[opcode.vx] = i;
                 keyPressed = true;
-                break;
             }
         }
-
+        
         // Si no se encontro una tecla presionada, se termina la ejecucion
         // y se intenta otravez.
         if(!keyPressed) return;
@@ -839,7 +841,7 @@ public class Chip8 {
         opcode.identificador = "Fx55";
         opcode.assembly = "LD I V"+opcode.vx;
 
-        for(int i=0; i<V[opcode.vx]; i++){
+        for(int i=0; i<= opcode.vx; i++){
             memory[I + i] = V[i];
         }
 
@@ -860,7 +862,7 @@ public class Chip8 {
         opcode.identificador = "Fx65";
         opcode.assembly = "LD V"+opcode.vx+" I";
 
-        for(int i=0; i<V[opcode.vx]; i++){
+        for(int i=0; i<= opcode.vx; i++){
             V[i] = memory[I + i];
         }
 
