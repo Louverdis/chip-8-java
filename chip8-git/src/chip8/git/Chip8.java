@@ -6,8 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import java.util.function.IntConsumer;
-
 /**
  *
  * @author Luis Mario
@@ -84,12 +82,12 @@ public class Chip8 {
 
     // Arreglo de referencias de funciones
     final private CicloChip8 tablaChip8[] = {
-        this::ejecutar00E0, this::ejecutar1NNN, this::ejecutar2NNN,
+        this::ejecutar00,   this::ejecutar1NNN, this::ejecutar2NNN,
         this::ejecutar3XNN, this::ejecutar4XNN, this::ejecutar5XY0,
-        this::ejecutar6XNN, this::ejecutar7XNN, this::ejecutar8XY0,
+        this::ejecutar6XNN, this::ejecutar7XNN, this::ejecutarOpAritmetica,
         this::ejecutar9XY0, this::ejecutarANNN, this::ejecutarBNNN,
-        this::ejecutarCXNN, this::ejecutarDXYN, this::ejecutarEX9E,
-        this::ejecutarFX07, this::opcodeUndefined
+        this::ejecutarCXNN, this::ejecutarDXYN, this::ejecutarSkip,
+        this::ejecutarFX,   this::opcodeUndefined
     };
 
     final private CicloChip8 tablaAritmeticaChip8[] = {
@@ -99,7 +97,7 @@ public class Chip8 {
         this::opcodeUndefined, this::opcodeUndefined, this::opcodeUndefined,
         this::opcodeUndefined, this::opcodeUndefined, this::ejecutar8XYE
     };
-    
+
     //private Map<Integer, CicloChip8> opcodeFxMap = new Map();
 
     /****************************************************************
@@ -147,496 +145,378 @@ public class Chip8 {
     public void emularCiclo(){
         // Obtener opcode: Compuesto de dos bytes, empezando desde 0x200
         int i_opcode = (memory[pc] << 8) | memory[pc+1];
-        if (i_opcode == 0){
-            pc += 2;
-            return;
-        }
 
-        // Variable temporal para armar la representacion en string del
-        // opcode traducido a assembly
-        String assembly = "NONE";
+        //if (i_opcode == 0){
+        //    pc += 2;
+        //    return;
+        //}
 
         // Desifrar opcode
         opcode = new Opcode(i_opcode);
 
-        /******************************
-        * Estructura del Opcode:
-        *  NNN: address
-        *  KK:  8-bit constant (byte)
-        *  N:   4-bit constant (nibble)
-        *  X,Y: 4-bit register identifier
-        *************************************/
-
-        // Direccion, byte y nibble
-        int nnn, kk, n;
-        // identificadores de registros
-        int x, y;
-
-        switch (i_opcode & 0xF000) {
-            case 0x0000:
-                // Existen dos Opcodes que empiezan con 0x00
-                switch (i_opcode & 0x000F) {
-                    case 0x0000:
-                        // 00E0 - CLS
-                        nnn = kk = n = x = y = 0;
-                        assembly = "CLS";
-                        break;
-
-                    case 0x000E:
-                        // 00EE - RET
-                        nnn = kk = n = x = y = 0;
-                        assembly = "RET";
-                        break;
-
-                    default:
-                        System.out.println(
-                            "Opcode desconocido: "+
-                            String.format("0x%04X", i_opcode)
-                        );
-                        break;
-                }
-                break;
-
-            case 0x1000:
-                // 1nnn - JP addr
-                kk = n = x = y = 0;
-                nnn = i_opcode & 0x0FFF;
-                assembly = "JP "+nnn;
-                break;
-
-            case 0x2000:
-                // 2nnn - CALL addr
-                kk = n = x = y = 0;
-                nnn = i_opcode & 0x0FFF;
-                assembly = "CALL "+nnn;
-                break;
-
-            case 0x3000:
-                // 3xkk - SE Vx, byte
-                nnn = n = y = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                kk = i_opcode & 0x00FF;
-
-                assembly = "SE V"+x+" "+kk;
-                break;
-
-            case 0x4000:
-                // 4xkk - SNE Vx, byte
-                nnn = n = y = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                kk = i_opcode & 0x00FF;
-
-                assembly = "SNE V"+x+" "+kk;
-                break;
-
-            case 0x5000:
-                // 5xy0 - SE Vx, Vy
-                nnn = kk = n = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                y = (i_opcode & 0x00F0) >> 4;
-
-                assembly = "SE V"+x+" V"+y;
-                break;
-
-            case 0x6000:
-                // 6xkk - LD Vx, byte
-                nnn = n = y = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                kk = i_opcode & 0x00FF;
-
-                assembly = "LD V"+x+" "+kk;
-                break;
-
-            case 0x7000:
-                // 7xkk - ADD Vx, byte
-                nnn = n = y = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                kk = i_opcode & 0x00FF;
-
-                assembly = "ADD V"+x+" "+kk;
-                break;
-
-            case 0x8000:
-                // Existen 9 opcodes que empiezan con 0x8xy
-                switch (i_opcode & 0x000F) {
-                    case 0x0000:
-                        // 8xy0 - LD Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "LD V"+x+" V"+y;
-                        break;
-
-                    case 0x0001:
-                        // 8xy1 - OR Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "OR V"+x+" V"+y;
-                        break;
-
-                    case 0x0002:
-                        // 8xy2 - AND Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "AND V"+x+" V"+y;
-                        break;
-
-                    case 0x0003:
-                        // 8xy3 - XOR Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "XOR V"+x+" V"+y;
-                        break;
-
-                    case 0x0004:
-                        // 8xy4 - ADD Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "ADD V"+x+" V"+y;
-                        break;
-
-                    case 0x0005:
-                        // 8xy5 - SUB Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "SUB V"+x+" V"+y;
-                        break;
-
-                    case 0x0006:
-                        // 8xy6 - SHR Vx {, Vy}
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "SHR V"+x+" V"+y;
-                        break;
-
-                    case 0x0007:
-                        // 8xy7 - SUBN Vx, Vy
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "SUBN V"+x+" V"+y;
-                        break;
-
-                    case 0x000E:
-                        // 8xyE - SHL Vx {, Vy}
-                        nnn = kk = n = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-                        y = (i_opcode & 0x00F0) >> 4;
-
-                        assembly = "SHL V"+x+" V"+y;
-                        break;
-
-                    default:
-                        System.out.println(
-                            "Opcode desconocido: "+
-                            String.format("0x%04X", i_opcode)
-                        );
-                        break;
-                }
-                break;
-
-            case 0x9000:
-                // 9xy0 - SNE Vx, Vy
-                nnn = kk = n = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                y = (i_opcode & 0x00F0) >> 4;
-
-                assembly = "SNE V"+x+" V"+y;
-                break;
-
-            case 0xA000:
-                // Annn - LD I, addr
-                kk = n = x = y = 0;
-
-                nnn = i_opcode & 0x0FFF;
-
-                assembly = "LD I "+nnn;
-                break;
-
-            case 0xB000:
-                // Bnnn - JP V0, addr
-                kk = n = x = y = 0;
-
-                nnn = i_opcode & 0x0FFF;
-
-                assembly = "JP V0 "+nnn;
-                break;
-
-            case 0xC000:
-                // Cxkk - RND Vx, byte
-                nnn = n = y = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                kk = i_opcode & 0x00FF;
-
-                assembly = "RND V"+x+" "+kk;
-                break;
-
-            case 0xD000:
-                // Dxyn - DRW Vx, Vy, nibble
-                nnn = kk = 0;
-
-                x = (i_opcode & 0x0F00) >> 8;
-                y = (i_opcode & 0x00F0) >> 4;
-                n = i_opcode & 0x000F;
-
-                assembly = "DRW V"+x+" V"+y+" "+n;
-                break;
-
-            case 0xE000:
-                // Existen 2 opcodes que empiezan con 0xEx
-                switch (i_opcode & 0x00FF) {
-                    case 0x009E:
-                        // Ex9E - SKP Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "SKP V"+x;
-                        break;
-
-                    case 0x00A1:
-                        // ExA1 - SKNP Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "SKNP V"+x;
-                        break;
-
-                    default:
-                        System.out.println(
-                            "Opcode desconocido: "+
-                            String.format("0x%04X", i_opcode)
-                        );
-                        break;
-                }
-                break;
-
-            case 0xF000:
-                // Existen 9 opcodes que empiezan con 0xFx
-                switch (i_opcode & 0x00FF) {
-                    case 0x0007:
-                        // Fx07 - LD Vx, DT
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD V"+x+" DT";
-                        break;
-
-                    case 0x000A:
-                        // Fx0A - LD Vx, K
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD V"+x+" K";
-                        break;
-
-                    case 0x0015:
-                        // Fx15 - LD DT, Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD DT V"+x;
-                        break;
-
-                    case 0x0018:
-                        // Fx18 - LD ST, Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD ST V"+x;
-                        break;
-
-                    case 0x001E:
-                        // Fx1E - ADD I, Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "ADD I, V"+x;
-                        break;
-
-                    case 0x0029:
-                        // Fx29 - LD F, Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD F V"+x;
-                        break;
-
-                    case 0x0033:
-                        // Fx33 - LD B, Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD B V"+x;
-                        break;
-
-                    case 0x0055:
-                        // Fx55 - LD [I], Vx
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD I V"+x;
-                        break;
-
-                    case 0x0065:
-                        // Fx65 - LD Vx, [I]
-                        nnn = kk = n = y = 0;
-
-                        x = (i_opcode & 0x0F00) >> 8;
-
-                        assembly = "LD V"+x+" I";
-                        break;
-
-                    default:
-                        System.out.println(
-                            "Opcode desconocido: "+
-                            String.format("0x%04X", i_opcode)
-                        );
-                        break;
-
-                }
-                break;
-
-            default:
-                System.out.println(
-                    "Opcode desconocido: "+
-                    String.format("0x%04X", i_opcode)
-                );
-                break;
-        }
-
         // Ejecutar opcode
-        //ejecutarOpcode(opcode);
-        //System.out.println(
-        //    String.fomat("Instruccion en 0x%04X: %s", pc, assembly)
-        //);
-        System.out.printf("Instruccion en 0x%04X: %s\n", pc, assembly);
+        ejecutarCiclo(tablaChip8[opcode.header]);
+
+        // Debugg: Imprimir en pantalla resultados
+        System.out.printf("Instruccion en 0x%04X: %s\n", pc, opcode.assembly);
 
         // Tras emular un ciclo, el pc debe moverse dos espacios
         // pues cada ciclo consume dos bytes.
-        pc += 2;
-
+        //pc += 2;
     }
 
-    //private Opcode descifrarOpcode(int op){return null;}
-
-    //private void ejecutarOpcode(Opcode opcode){}
-
+    private void ejecutarCiclo(CicloChip8 ciclo){
+        ciclo.ejecutar();
+    }
 
     /****************************************************************
     * Grupo de funciones privadas encargadas de la ejecucion de
     *  los Opcodes durante cada ciclo de emulacion.
     ****************************************************************/
     private void opcodeUndefined(){
-        // ejecucion para los opcodes no identificados
+        System.out.print("    Opcode no definido: ");
+        System.out.printf("0x%04X\n", opcode.hex_opcode);
+        opcode.assembly = "UNDEFINED";
     }
 
-    private void ejecutar00E0(){}
+    private void ejecutarOpAritmetica(){
+        ejecutarCiclo(tablaAritmeticaChip8[opcode.nibble]);
+    }
 
-    private void ejecutar00EE(){}
+    private void ejecutar00(){
+        if(opcode.nibble == 0x0000){
+            ejecutar00E0();
+        }
+        else if(opcode.nibble == 0x000E){
+            ejecutar00EE();
+        }
+        else{
+            opcodeUndefined();
+        }
+    }
 
-    private void ejecutar1NNN(){}
+    private void ejecutarSkip(){
+        if(opcode._byte == 0x009E){
+            ejecutarEX9E();
+        }
+        else if(opcode._byte == 0x00A1){
+            ejecutarEXA1();
+        }
+        else{
+            opcodeUndefined();
+        }
+    }
 
-    private void ejecutar2NNN(){}
+    private void ejecutarFX(){
+        int _byte = opcode._byte;
 
-    private void ejecutar3XNN(){}
+        switch (_byte) {
+            case 0x0007:
+                ejecutarFX07();
+                break;
 
-    private void ejecutar4XNN(){}
+            case 0x000A:
+                ejecutarFX0A();
+                break;
 
-    private void ejecutar5XY0(){}
+            case 0x0015:
+                ejecutarFX15();
+                break;
 
-    private void ejecutar6XNN(){}
+            case 0x0018:
+                ejecutarFX18();
+                break;
 
-    private void ejecutar7XNN(){}
+            case 0x001E:
+                ejecutarFX1E();
+                break;
 
-    private void ejecutar8XY0(){}
+            case 0x0029:
+                ejecutarFX29();
+                break;
 
-    private void ejecutar8XY1(){}
+            case 0x0033:
+                ejecutarFX33();
+                break;
 
-    private void ejecutar8XY2(){}
+            case 0x0055:
+                ejecutarFX55();
+                break;
 
-    private void ejecutar8XY3(){}
+            case 0x0065:
+                ejecutarFX65();
+                break;
 
-    private void ejecutar8XY4(){}
+            default: opcodeUndefined();
+        }
+    }
 
-    private void ejecutar8XY5(){}
+    // Por terminar
+    private void ejecutar00E0(){
+        // 00E0 - CLS
+        opcode.identificador = "00E0";
+        opcode.assembly = "CLS";
+    }
 
-    private void ejecutar8XY6(){}
+    // Por terminar
+    private void ejecutar00EE(){
+        // 00EE - RET
+        opcode.identificador = "00EE";
+        opcode.assembly = "RET";
+    }
 
-    private void ejecutar8XY7(){}
+    // Por terminar
+    private void ejecutar1NNN(){
+        // 1nnn - JP addr
+        opcode.identificador = "1nnn";
+        opcode.assembly = "JP "+opcode.address;
+    }
 
-    private void ejecutar8XYE(){}
+    private void ejecutar2NNN(){
+        // 2nnn - CALL addr
+        opcode.identificador = "2nnn";
+        opcode.assembly = "CALL "+opcode.address;
 
-    private void ejecutar9XY0(){}
+        stack[sp] = pc;
+        sp++;
+        pc = opcode.address;
+    }
 
-    private void ejecutarANNN(){}
+    // Por terminar
+    private void ejecutar3XNN(){
+        // 3xkk - SE Vx, byte
+        opcode.identificador = "3xkk";
+        opcode.assembly = "SE V"+opcode.vx+" "+opcode._byte;
+    }
 
-    private void ejecutarBNNN(){}
+    // Por terminar
+    private void ejecutar4XNN(){
+        // 4xkk - SNE Vx, byte
+        opcode.identificador = "4xkk";
+        opcode.assembly = "SNE V"+opcode.vx+" "+opcode._byte;
+    }
 
-    private void ejecutarCXNN(){}
+    // Por terminar
+    private void ejecutar5XY0(){
+        // 5xy0 - SE Vx, Vy
+        opcode.identificador = "5xy0";
+        opcode.assembly = "SE V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarDXYN(){}
+    // Por terminar
+    private void ejecutar6XNN(){
+        // 6xkk - LD Vx, byte
+        opcode.identificador = "6xkk";
+        opcode.assembly = "LD V"+opcode.vx+" "+opcode._byte;
+    }
 
-    private void ejecutarEX9E(){}
+    // Por terminar
+    private void ejecutar7XNN(){
+        // 7xkk - ADD Vx, byte
+        opcode.identificador = "7xkk";
+        opcode.assembly = "ADD V"+opcode.vx+" "+opcode._byte;
+    }
 
-    private void ejecutarEXA1(){}
+    // Por terminar
+    private void ejecutar8XY0(){
+        // 8xy0 - LD Vx, Vy
+        opcode.identificador = "8xy0";
+        opcode.assembly = "LD V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarFX07(){}
+    // Por terminar
+    private void ejecutar8XY1(){
+        // 8xy1 - OR Vx, Vy
+        opcode.identificador = "8xy1";
+        opcode.assembly = "OR V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarFX0A(){}
+    // Por terminar
+    private void ejecutar8XY2(){
+        // 8xy2 - AND Vx, Vy
+        opcode.identificador = "8xy2";
+        opcode.assembly = "AND V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarFX15(){}
+    // Por terminar
+    private void ejecutar8XY3(){
+        // 8xy3 - XOR Vx, Vy
+        opcode.identificador = "8xy3";
+        opcode.assembly = "XOR V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarFX18(){}
+    private void ejecutar8XY4(){
+        // 8xy4 - ADD Vx, Vy
+        opcode.identificador = "8xy4";
+        opcode.assembly = "ADD V"+opcode.vx+" V"+opcode.vy;
 
-    private void ejecutarFX1E(){}
+        // Si la suma de Vx y Vy es mayor a 255, el registro VF se le
+        // marca un carry
+        if(V[opcode.vy] > (0xFF - V[opcode.vx])){
+            // Carry
+            V[0xF] = 1;
+        }
+        else{
+            // No carry
+            V[0xF] = 0;
+        }
+        int suma = V[opcode.vx] + V[opcode.vy];
 
-    private void ejecutarFX29(){}
+        // Los registros solo tienen un tamaño de un byte,
+        // de modo que solo se toman los primeros 8 bits del resultado
+        V[opcode.vx] = (suma & 0xFF);
+        pc += 2;
+    }
 
-    private void ejecutarFX33(){}
+    // Por terminar
+    private void ejecutar8XY5(){
+        // 8xy5 - SUB Vx, Vy
+        opcode.identificador = "8xy5";
+        opcode.assembly = "SUB V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarFX55(){}
+    // Por terminar
+    private void ejecutar8XY6(){
+        // 8xy6 - SHR Vx {, Vy}
+        opcode.identificador = "8xy6";
+        opcode.assembly = "SHR V"+opcode.vx+" V"+opcode.vy;
+    }
 
-    private void ejecutarFX65(){}
+    // Por terminar
+    private void ejecutar8XY7(){
+        // 8xy7 - SUBN Vx, Vy
+        opcode.identificador = "8xy7";
+        opcode.assembly = "SUBN V"+opcode.vx+" V"+opcode.vy;
+    }
+
+    // Por terminar
+    private void ejecutar8XYE(){
+        // 8xyE - SHL Vx {, Vy}
+        opcode.identificador = "8xyE";
+        opcode.assembly = "SHL V"+opcode.vx+" V"+opcode.vy;
+    }
+
+    // Por terminar
+    private void ejecutar9XY0(){
+        // 9xy0 - SNE Vx, Vy
+        opcode.identificador = "9xy0";
+        opcode.assembly = "SNE V"+opcode.vx+" V"+opcode.vy;
+    }
+
+    // Por terminar
+    private void ejecutarANNN(){
+        // Annn - LD I, addr
+        opcode.identificador = "Annn";
+        opcode.assembly = "LD I "+opcode.address;
+    }
+
+    // Por terminar
+    private void ejecutarBNNN(){
+        // Bnnn - JP V0, addr
+        opcode.identificador = "Bnnn";
+        opcode.assembly = "JP V0 "+opcode.address;
+    }
+
+    // Por terminar
+    private void ejecutarCXNN(){
+        // Cxkk - RND Vx, byte
+        opcode.identificador = "Cxkk";
+        opcode.assembly = "RND V"+opcode.vx+" "+opcode._byte;
+    }
+
+    // Por terminar
+    private void ejecutarDXYN(){
+        // Dxyn - DRW Vx, Vy, nibble
+        opcode.identificador = "Dxyn";
+        opcode.assembly = "DRW V"+opcode.vx+" V"+opcode.vy+" "+opcode.nibble;
+    }
+
+    // Por terminar
+    private void ejecutarEX9E(){
+        // Ex9E - SKP Vx
+        opcode.identificador = "Ex9E";
+        opcode.assembly = "SKP V"+opcode.vx;
+    }
+
+    // Por terminar
+    private void ejecutarEXA1(){
+        // ExA1 - SKNP Vx
+        opcode.identificador = "ExA1";
+        opcode.assembly = "SKNP V"+opcode.vx;
+    }
+
+    // Por terminar
+    private void ejecutarFX07(){
+        // Fx07 - LD Vx, DT
+        opcode.identificador = "Fx07";
+        opcode.assembly = "LD V"+opcode.vx+" DT";
+    }
+
+    // Por terminar
+    private void ejecutarFX0A(){
+        // Fx0A - LD Vx, K
+        opcode.identificador = "Fx0A";
+        opcode.assembly = "LD V"+opcode.vx+" K";
+    }
+
+    // Por terminar
+    private void ejecutarFX15(){
+        // Fx15 - LD DT, Vx
+        opcode.identificador = "Fx15";
+        opcode.assembly = "LD DT V"+opcode.vx;
+    }
+
+    // Por terminar
+    private void ejecutarFX18(){
+        // Fx18 - LD ST, Vx
+        opcode.identificador = "Fx18";
+        opcode.assembly = "LD ST V"+opcode.vx;
+    }
+
+    // Por terminar
+    private void ejecutarFX1E(){
+        // Fx1E - ADD I, Vx
+        opcode.identificador = "Fx1E";
+        opcode.assembly = "ADD I, V"+opcode.vx;
+    }
+
+    // Por terminar
+    private void ejecutarFX29(){
+        // Fx29 - LD F, Vx
+        opcode.identificador = "Fx29";
+        opcode.assembly = "LD F V"+opcode.vx;
+    }
+
+    private void ejecutarFX33(){
+        // Fx33 - LD B, Vx
+        opcode.identificador = "Fx33";
+        opcode.assembly = "LD B V"+opcode.vx;
+
+        // Representacion decimal (centenas) en I
+        memory[I] = (opcode.vx/100);
+
+        // Representacion decimal (decenas) en I+1
+        memory[I+1] = (opcode.vx/10)%10;
+
+        // Representacion decimal (unidades) en I+2
+        memory[I+2] = (opcode.vx%100)%10;
+
+        pc += 2;
+    }
+
+    // Por terminar
+    private void ejecutarFX55(){
+        // Fx55 - LD [I], Vx
+        opcode.identificador = "Fx55";
+        opcode.assembly = "LD I V"+opcode.vx;
+    }
+
+    // Por terminar
+    private void ejecutarFX65(){
+        // Fx65 - LD Vx, [I]
+        opcode.identificador = "Fx65";
+        opcode.assembly = "LD V"+opcode.vx+" I";
+    }
 
 
     /*******************************************************************
@@ -662,6 +542,21 @@ public class Chip8 {
                 System.out.println();
                 contador = 32;
             }
+        }
+        System.out.println();
+    }
+
+    public void textRender(){
+        // Dibujar con texto el gfx[]
+        for(int y = 0; y < 32; y++){
+            for(int x = 0; x < 64; x++){
+                if(gfx[(y*64) + x] == 0)
+                    System.out.print("O");
+
+                else
+                    System.out.print(" ");
+            }
+            System.out.println();
         }
         System.out.println();
     }

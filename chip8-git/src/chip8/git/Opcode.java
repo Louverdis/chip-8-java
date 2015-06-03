@@ -14,6 +14,9 @@ public class Opcode {
     *  X,Y: 4-bit register identifier
     *************************************/
 
+    // Forma original del opcode
+    public int hex_opcode;
+
     // Cabeza identificadora del opcode
     public int header;
 
@@ -28,8 +31,8 @@ public class Opcode {
 
     // Componente X
     public int vx;
-    
-// Componente Y
+
+    // Componente Y
     public int vy;
 
     // Atributos para representacion en texto
@@ -41,6 +44,7 @@ public class Opcode {
     * representacion numerica.
     */
     public Opcode(int iOpcode){
+        hex_opcode = iOpcode;
         header  = (iOpcode & 0xF000) >> 12;
         address = iOpcode & 0x0FFF;
         _byte   = iOpcode & 0x00FF;

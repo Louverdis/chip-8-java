@@ -40,6 +40,7 @@ public class Main {
     */
 
     public static void main(String[] args) {
+        boolean CPU_ACTIVO = true;
         /*
         int i = 1;
 
@@ -71,6 +72,8 @@ public class Main {
         myChip.imprimirMemoria();
 
         System.out.println("\n\nDisassembly del programa c8");
+        //while(CPU_ACTIVO){} -> Forma correcta, el ciclo actual se usa
+        //                       mientras el programa esta en desarrollo
         while(myChip.pc < 4096){
             myChip.emularCiclo();
         }
