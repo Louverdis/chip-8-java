@@ -71,12 +71,24 @@ public class Main {
 
         myChip.imprimirMemoria();
 
-        System.out.println("\n\nDisassembly del programa c8");
-        //while(CPU_ACTIVO){} -> Forma correcta, el ciclo actual se usa
-        //                       mientras el programa esta en desarrollo
-        while(myChip.pc < 4096){
+        
+        //System.out.println("\n\nDisassembly del programa c8");
+        System.out.println("\n\nEjecucion del programa c8");
+        
+        // Ciclo principal
+        while(CPU_ACTIVO){
             myChip.emularCiclo();
+            
+            // Render
+            if(myChip.drawFlag){
+                myChip.textRender();
+                myChip.drawFlag = false;
+            }
         }
+        //while(myChip.pc < 4096){
+        //    myChip.emularCiclo();
+        //}
+        
     }
 
 }
