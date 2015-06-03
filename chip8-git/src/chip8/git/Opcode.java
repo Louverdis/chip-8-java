@@ -51,7 +51,7 @@ public class Opcode {
         nibble  = iOpcode & 0x000F;
 
         vx = (iOpcode & 0x0F00) >> 8;
-        vx = (iOpcode & 0x00F0) >> 4;
+        vy = (iOpcode & 0x00F0) >> 4;
 
         identificador = "";
         assembly = "";

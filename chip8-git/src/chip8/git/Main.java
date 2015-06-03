@@ -64,21 +64,21 @@ public class Main {
         Chip8 myChip = new Chip8();
         myChip.init();
         try {
-            myChip.cargarJuego("pong2.c8");
+            myChip.cargarJuego("invaders.c8");
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         myChip.imprimirMemoria();
 
-        
+
         //System.out.println("\n\nDisassembly del programa c8");
         System.out.println("\n\nEjecucion del programa c8");
-        
+
         // Ciclo principal
         while(CPU_ACTIVO){
             myChip.emularCiclo();
-            
+
             // Render
             if(myChip.drawFlag){
                 myChip.textRender();
@@ -88,7 +88,7 @@ public class Main {
         //while(myChip.pc < 4096){
         //    myChip.emularCiclo();
         //}
-        
+
     }
 
 }
