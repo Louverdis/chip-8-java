@@ -161,12 +161,15 @@ public class Chip8 {
         actualizarTimers();
 
         // Debugg: Imprimir en pantalla resultados
-        // System.out.printf("Instruccion en 0x%04X: %s\n", pc, opcode.assembly);
+        System.out.printf("Instruccion en 0x%04X: %s\n", pc, opcode.assembly);
         System.out.printf(
             "\tEn base al opcode: %04X -- id: %s\n",
             opcode.hex_opcode,
             opcode.identificador
         );
+
+        // Debugg verbose
+        imprimirDetalleChip();
     }
 
     private void actualizarTimers(){
@@ -304,7 +307,7 @@ public class Chip8 {
         * The interpreter sets the program counter to nnn.
         */
         opcode.identificador = "1nnn";
-        opcode.assembly = "JP "+opcode.address;
+        opcode.assembly = String.format("JP %03X", opcode.address);
 
         pc = opcode.address;
     }
@@ -317,7 +320,7 @@ public class Chip8 {
         * PC on the top of the stack. The PC is then set to nnn.
         */
         opcode.identificador = "2nnn";
-        opcode.assembly = "CALL "+opcode.address;
+        opcode.assembly = String.format("CALL %03X", opcode.address);
 
         stack[sp] = pc;
         sp++;
@@ -332,7 +335,7 @@ public class Chip8 {
         * increments the program counter by 2.
         */
         opcode.identificador = "3xkk";
-        opcode.assembly = "SE V"+opcode.vx+" "+opcode._byte;
+        opcode.assembly = String.format("SE V%01X %02X", opcode.vx, opcode._byte);
 
         if(V[opcode.vx] == opcode._byte)
             pc += 4;
@@ -348,7 +351,7 @@ public class Chip8 {
         * equal, increments the program counter by 2.
         */
         opcode.identificador = "4xkk";
-        opcode.assembly = "SNE V"+opcode.vx+" "+opcode._byte;
+        opcode.assembly = String.format("SNE V%01X %02X", opcode.vx, opcode._byte);
 
         if(V[opcode.vx] != opcode._byte)
             pc += 4;
@@ -364,7 +367,7 @@ public class Chip8 {
         * are equal, increments the program counter by 2.
         */
         opcode.identificador = "5xy0";
-        opcode.assembly = "SE V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("SE V%01X V%01X", opcode.vx, opcode.vy);
 
         if(V[opcode.vx] == V[opcode.vy])
             pc += 4;
@@ -379,7 +382,7 @@ public class Chip8 {
         * The interpreter puts the value kk into register Vx.
         */
         opcode.identificador = "6xkk";
-        opcode.assembly = "LD V"+opcode.vx+" "+opcode._byte;
+        opcode.assembly = String.format("LD V%01X %02X", opcode.vx, opcode._byte);
 
         V[opcode.vx] = opcode._byte;
         pc += 2;
@@ -393,7 +396,7 @@ public class Chip8 {
         *¨result in Vx.
         */
         opcode.identificador = "7xkk";
-        opcode.assembly = "ADD V"+opcode.vx+" "+opcode._byte;
+        opcode.assembly = String.format("ADD V%01X %02X", opcode.vx, opcode._byte);
 
         V[opcode.vx] += opcode._byte;
         pc += 2;
@@ -406,7 +409,7 @@ public class Chip8 {
         * Stores the value of register Vy in register Vx.
         */
         opcode.identificador = "8xy0";
-        opcode.assembly = "LD V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("LD V%01X V%01X", opcode.vx, opcode.vy);
 
         V[opcode.vx] = V[opcode.vy];
         pc += 2;
@@ -422,7 +425,7 @@ public class Chip8 {
         * also 1. Otherwise, it is 0.
         */
         opcode.identificador = "8xy1";
-        opcode.assembly = "OR V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("OR V%01X V%01X", opcode.vx, opcode.vy);
 
         V[opcode.vx] |= V[opcode.vy];
         pc += 2;
@@ -438,7 +441,7 @@ public class Chip8 {
         * also 1. Otherwise, it is 0.
         */
         opcode.identificador = "8xy2";
-        opcode.assembly = "AND V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("ADD V%01X V%01X", opcode.vx, opcode.vy);
 
         V[opcode.vx] &= V[opcode.vy];
         pc += 2;
@@ -454,7 +457,7 @@ public class Chip8 {
         * the corresponding bit in the result is set to 1. Otherwise, it is 0.
         */
         opcode.identificador = "8xy3";
-        opcode.assembly = "XOR V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("XOR V%01X V%01X", opcode.vx, opcode.vy);
 
         V[opcode.vx] ^= V[opcode.vy];
         pc += 2;
@@ -469,7 +472,7 @@ public class Chip8 {
         * Only the lowest 8 bits of the result are kept, and stored in Vx.
         */
         opcode.identificador = "8xy4";
-        opcode.assembly = "ADD V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("ADD V%01X V%01X", opcode.vx, opcode.vy);
 
         // Si la suma de Vx y Vy es mayor a 255, el registro VF se le
         // marca un carry
@@ -498,7 +501,7 @@ public class Chip8 {
         * from Vx, and the results stored in Vx.
         */
         opcode.identificador = "8xy5";
-        opcode.assembly = "SUB V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("SUB V%01X V%01X", opcode.vx, opcode.vy);
 
         if(V[opcode.vy] > V[opcode.vx])
             V[0xF] = 0;
@@ -518,7 +521,7 @@ public class Chip8 {
         * otherwise 0. Then Vx is divided by 2.
         */
         opcode.identificador = "8xy6";
-        opcode.assembly = "SHR V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("SHR V%01X { V%01X }", opcode.vx, opcode.vy);
 
         // El bit menos significante es el de la derecha
         V[0xF] = V[opcode.vx] & 0x1; // Mascara del ultimo bit
@@ -536,7 +539,7 @@ public class Chip8 {
         * from Vy, and the results stored in Vx.
         */
         opcode.identificador = "8xy7";
-        opcode.assembly = "SUBN V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("SUBN V%01X V%01X", opcode.vx, opcode.vy);
 
         if(V[opcode.vx] > V[opcode.vy])
             V[0xF] = 0;
@@ -556,7 +559,7 @@ public class Chip8 {
         * otherwise to 0. Then Vx is multiplied by 2.
         */
         opcode.identificador = "8xyE";
-        opcode.assembly = "SHL V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("SHL V%01X { V%01X }", opcode.vx, opcode.vy);
 
         // El bit mas significativo es el de la izquierda
         V[0xF] = V[opcode.vx] >> 7; // El shift solo deja al bit necesario
@@ -574,7 +577,7 @@ public class Chip8 {
         * the program counter is increased by 2.
         */
         opcode.identificador = "9xy0";
-        opcode.assembly = "SNE V"+opcode.vx+" V"+opcode.vy;
+        opcode.assembly = String.format("SNE V%01X V%01X", opcode.vx, opcode.vy);
 
         if(V[opcode.vx] != V[opcode.vy])
             pc += 4;
@@ -589,7 +592,7 @@ public class Chip8 {
         * The value of register I is set to nnn.
         */
         opcode.identificador = "Annn";
-        opcode.assembly = "LD I "+opcode.address;
+        opcode.assembly = String.format("LD I %02X", opcode.address);
 
         I = opcode.address;
         pc += 2;
@@ -602,7 +605,7 @@ public class Chip8 {
         * The program counter is set to nnn plus the value of V0.
         */
         opcode.identificador = "Bnnn";
-        opcode.assembly = "JP V0 "+opcode.address;
+        opcode.assembly = String.format("JP V0 %02X", opcode.address);
 
         pc = opcode.address + V[0];
     }
@@ -616,7 +619,7 @@ public class Chip8 {
         * instruction 8xy2 for more information on AND.
         */
         opcode.identificador = "Cxkk";
-        opcode.assembly = "RND V"+opcode.vx+" "+opcode._byte;
+        opcode.assembly = String.format("RND V%01X %02X", opcode.vx, opcode._byte);
 
         // Numero random con valores de 0 - 255
         int n_rand = rand.nextInt(256);
@@ -641,7 +644,9 @@ public class Chip8 {
         * screen and sprites
         */
         opcode.identificador = "Dxyn";
-        opcode.assembly = "DRW V"+opcode.vx+" V"+opcode.vy+" "+opcode.nibble;
+        opcode.assembly = String.format(
+            "DRW V%01X V%01X %01X", opcode.vx, opcode.vy, opcode.nibble
+        );
 
         int pixel;
 
@@ -650,24 +655,41 @@ public class Chip8 {
         for(int y=0; y < opcode.nibble; y++){
             pixel = memory[I+y];
 
+            // Debug
+            System.out.println("Valor del pixel: "+pixel);
+
             // Loop de los 8 bits de la fila
             for(int x=0; x < 8; x++){
                 // Se comprueba si el bit actual se debera de pintar
                 // Se usa 0x80 (1000 0000 en binario) para ir recorriendo los
                 // bit de la fila del sprite
-                if((pixel & (0x80 >> x)) != 0){
+                int masked_pixel = (pixel & (0x80 >> x));
+
+                // Debug
+                System.out.println("Valor del pixel tras aplicar mascara: "+masked_pixel);
+
+                if(masked_pixel != 0){
                     // Si el pixel a pintar ya esta activo, se asigna 1 al
                     // registro VF, normalmente usado para detectar colision
                     if(gfx[(opcode.vx + x + ((opcode.vy + y)*64))] == 1){
                         V[0xF] = 1;
+                    }else{
+                        V[0xF] = 0;
                     }
 
                     // El nuevo valor en pantalla se define con una
                     // operacion XOR
-                    gfx[opcode.vx + x + ((opcode.vy + y) * 64)] ^= 1;
+                    //gfx[opcode.vx + x + ((opcode.vy + y) * 64)] ^= 1;
+
+                    // Debugg
+                    int punto = gfx[(opcode.vx + x + ((opcode.vy + y) * 64))];
+                    System.out.println("Valor del punto actual: "+punto);
+                    punto ^= 1;
+                    System.out.println("Valor del punto actual tras XOR: "+punto);
+
+                    gfx[(opcode.vx + x + ((opcode.vy + y) * 64))] ^= 1;
                 }
             }
-
         }
 
         // La pantalla se marca para una actualizacion
@@ -683,7 +705,7 @@ public class Chip8 {
         * Vx is currently in the down position, PC is increased by 2.
         */
         opcode.identificador = "Ex9E";
-        opcode.assembly = "SKP V"+opcode.vx;
+        opcode.assembly = String.format("SKP V%01X", opcode.vx);
 
         // Si la tecla almacenada en Vx esta presionada, se salta
         // la siguiente instruccion
@@ -701,7 +723,7 @@ public class Chip8 {
         * is currently in the up position, PC is increased by 2.
         */
         opcode.identificador = "ExA1";
-        opcode.assembly = "SKNP V"+opcode.vx;
+        opcode.assembly = String.format("SKNP V%01X", opcode.vx);
 
         // Lo inverso a EX9E
         if(key[V[opcode.vx]] == 0)
@@ -716,7 +738,7 @@ public class Chip8 {
         *
         * The value of DT is placed into Vx.*/
         opcode.identificador = "Fx07";
-        opcode.assembly = "LD V"+opcode.vx+" DT";
+        opcode.assembly = String.format("LD V%01X DT", opcode.vx);
 
         V[opcode.vx] = delayTimer;
         pc += 2;
@@ -730,7 +752,7 @@ public class Chip8 {
         * key is stored in Vx.
         */
         opcode.identificador = "Fx0A";
-        opcode.assembly = "LD V"+opcode.vx+" K";
+        opcode.assembly = String.format("LD V%01X K", opcode.vx);
 
         boolean keyPressed = false;
 
@@ -740,7 +762,7 @@ public class Chip8 {
                 keyPressed = true;
             }
         }
-        
+
         // Si no se encontro una tecla presionada, se termina la ejecucion
         // y se intenta otravez.
         if(!keyPressed) return;
@@ -755,7 +777,7 @@ public class Chip8 {
         * DT is set equal to the value of Vx.
         */
         opcode.identificador = "Fx15";
-        opcode.assembly = "LD DT V"+opcode.vx;
+        opcode.assembly = String.format("LD DT V%01X", opcode.vx);
 
         delayTimer = V[opcode.vx];
         pc += 2;
@@ -768,7 +790,7 @@ public class Chip8 {
         * ST is set equal to the value of Vx.
         */
         opcode.identificador = "Fx18";
-        opcode.assembly = "LD ST V"+opcode.vx;
+        opcode.assembly = String.format("LD ST V%01X", opcode.vx);
 
         soundTimer = V[opcode.vx];
         pc += 2;
@@ -781,7 +803,7 @@ public class Chip8 {
         * The values of I and Vx are added, and the results are stored in I.
         */
         opcode.identificador = "Fx1E";
-        opcode.assembly = "ADD I, V"+opcode.vx;
+        opcode.assembly = String.format("ADD I V%01X", opcode.vx);
 
         // Se coloca una bandera en VF si en I existe un range overflow
         if((I + V[opcode.vx]) > 0xFFF)
@@ -802,7 +824,7 @@ public class Chip8 {
         * information on the Chip-8 hexadecimal font.
         */
         opcode.identificador = "Fx29";
-        opcode.assembly = "LD F V"+opcode.vx;
+        opcode.assembly = String.format("LD F V%01X", opcode.vx);
 
         I = V[opcode.vx] * 0x5;
         pc += 2;
@@ -817,7 +839,7 @@ public class Chip8 {
         * location I+1, and the ones digit at location I+2.
         */
         opcode.identificador = "Fx33";
-        opcode.assembly = "LD B V"+opcode.vx;
+        opcode.assembly = String.format("LD B V%01X", opcode.vx);
 
         // Representacion decimal (centenas) en I
         memory[I] = (opcode.vx/100);
@@ -839,7 +861,7 @@ public class Chip8 {
         * memory, starting at the address in I.
         */
         opcode.identificador = "Fx55";
-        opcode.assembly = "LD I V"+opcode.vx;
+        opcode.assembly = String.format("LD [I] V%01X", opcode.vx);
 
         for(int i=0; i<= opcode.vx; i++){
             memory[I + i] = V[i];
@@ -860,7 +882,7 @@ public class Chip8 {
         * into registers V0 through Vx.
         */
         opcode.identificador = "Fx65";
-        opcode.assembly = "LD V"+opcode.vx+" I";
+        opcode.assembly = String.format("LD V%01X [I]", opcode.vx);
 
         for(int i=0; i<= opcode.vx; i++){
             V[i] = memory[I + i];
@@ -898,6 +920,17 @@ public class Chip8 {
             }
         }
         System.out.println();
+    }
+
+    public void imprimirDetalleChip(){
+        System.out.println("\t-----------------");
+
+        System.out.println("Detalle de registros");
+        for(int i=0; i<16; i++){
+            System.out.printf("V%01X: %02X - ", i, V[i]);
+        }
+
+        System.out.println("\nValor de I: "+I);
     }
 
     public void textRender(){
