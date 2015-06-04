@@ -62,7 +62,7 @@ public class Chip8 {
     // Graficas del Chip8:
     //   Blanco y negro.
     //   Pantalla de 2048 pixeles (64*32).
-    final private int gfx[] = new int[64*32];
+    final public int gfx[] = new int[64*32];
 
     // Registros del timer
     //  Los timers trabajan a 60 Hz
@@ -79,7 +79,7 @@ public class Chip8 {
     final private Random rand = new Random();
 
     // keypad basado en HEX (0x0 - 0xF)
-    final private int key[] = new int[16];
+    final public int key[] = new int[16];
 
     // Bandera para marcar una accion en pantalla pendiente
     public boolean drawFlag;
@@ -648,53 +648,53 @@ public class Chip8 {
             "DRW V%01X V%01X %01X", opcode.vx, opcode.vy, opcode.nibble
         );
 
-        int pixel;
+        // Posicion x,y del sprite a dibujar
+	int x = V[opcode.vx];
+	int y = V[opcode.vy];
+	        
+	int pixel;
 
-        V[0xF] = 0;
-        // Loop de las filas del sprite
-        for(int y=0; y < opcode.nibble; y++){
-            pixel = memory[I+y];
+	V[0xF] = 0;
+	// Loop de las filas del sprite
+	for(int ejeY=0; ejeY < opcode.nibble; ejeY++){
+	    pixel = memory[I+ejeY];
 
-            // Debug
-            System.out.println("Valor del pixel: "+pixel);
-
-            // Loop de los 8 bits de la fila
-            for(int x=0; x < 8; x++){
+	    // Loop de los 8 bits de la fila
+	    for(int ejeX=0; ejeX < 8; ejeX++){
                 // Se comprueba si el bit actual se debera de pintar
                 // Se usa 0x80 (1000 0000 en binario) para ir recorriendo los
                 // bit de la fila del sprite
-                int masked_pixel = (pixel & (0x80 >> x));
-
-                // Debug
-                System.out.println("Valor del pixel tras aplicar mascara: "+masked_pixel);
+                int masked_pixel = (pixel & (0x80 >> ejeX));
 
                 if(masked_pixel != 0){
-                    // Si el pixel a pintar ya esta activo, se asigna 1 al
-                    // registro VF, normalmente usado para detectar colision
-                    if(gfx[(opcode.vx + x + ((opcode.vy + y)*64))] == 1){
-                        V[0xF] = 1;
-                    }else{
-                        V[0xF] = 0;
-                    }
+	            // Los valores posicionales x,y haran 
+	            // warp de valores tras superar 0x3F(63) y 0x1F(31) 
+	            // respectivamente
+	                	
+	            // Solo se toman los 6 bits de la izq
+	            int cordenadaX = (x + ejeX) & 0x3F;
+	                	
+	            // Solo se toman los 5 bits de la izq
+	            int cordenadaY = (y + ejeY) & 0x1F;
+	                	
+	            // Si el pixel a pintar ya esta activo, se asigna 1 al
+	            // registro VF, normalmente usado para detectar colision
+	            //if(gfx[(x + ejeX + ((y + ejeY)*64))] == 1){
+	            if(gfx[(cordenadaX + ((cordenadaY)*64))] == 1){
+	                V[0xF] = 1;
+	            }
+	                	
+	            // El nuevo valor en pantalla se define con una
+	            // operacion XOR
+	            //gfx[(x + ejeX + ((y + ejeY) * 64))] ^= 1;
+	            gfx[(cordenadaX + ((cordenadaY)*64))] ^= 1;
+	        }
+	    }
+	}
 
-                    // El nuevo valor en pantalla se define con una
-                    // operacion XOR
-                    //gfx[opcode.vx + x + ((opcode.vy + y) * 64)] ^= 1;
-
-                    // Debugg
-                    int punto = gfx[(opcode.vx + x + ((opcode.vy + y) * 64))];
-                    System.out.println("Valor del punto actual: "+punto);
-                    punto ^= 1;
-                    System.out.println("Valor del punto actual tras XOR: "+punto);
-
-                    gfx[(opcode.vx + x + ((opcode.vy + y) * 64))] ^= 1;
-                }
-            }
-        }
-
-        // La pantalla se marca para una actualizacion
-        drawFlag = true;
-        pc += 2;
+	// La pantalla se marca para una actualizacion
+	 drawFlag = true;
+	 pc += 2;
     }
 
     private void ejecutarEX9E(){
