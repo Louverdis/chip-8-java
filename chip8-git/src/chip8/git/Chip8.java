@@ -147,6 +147,10 @@ public class Chip8 {
             memory[512+i] = (buffer[i] & 0xFF); // Se convierte a Unsigned
         }
     }
+    
+    public void setKeyPad(int[] keyBuffer) {
+        System.arraycopy(keyBuffer, 0, key, 0, key.length);
+    }
 
     public void emularCiclo(){
         // Obtener opcode: Compuesto de dos bytes, empezando desde 0x200
@@ -169,7 +173,7 @@ public class Chip8 {
         );
 
         // Debugg verbose
-        imprimirDetalleChip();
+        //imprimirDetalleChip();
     }
 
     private void actualizarTimers(){
@@ -398,7 +402,9 @@ public class Chip8 {
         opcode.identificador = "7xkk";
         opcode.assembly = String.format("ADD V%01X %02X", opcode.vx, opcode._byte);
 
-        V[opcode.vx] += opcode._byte;
+        int suma = V[opcode.vx] + opcode._byte;
+        V[opcode.vx] = (suma & 0xFF);
+        //V[opcode.vx] += opcode._byte;
         pc += 2;
     }
 
@@ -503,10 +509,10 @@ public class Chip8 {
         opcode.identificador = "8xy5";
         opcode.assembly = String.format("SUB V%01X V%01X", opcode.vx, opcode.vy);
 
-        if(V[opcode.vy] > V[opcode.vx])
-            V[0xF] = 0;
-        else
+        if(V[opcode.vx] > V[opcode.vy])
             V[0xF] = 1;
+        else
+            V[0xF] = 0;
 
         int resta = V[opcode.vx] - V[opcode.vy];
         V[opcode.vx] = (resta & 0xFF);
@@ -842,13 +848,13 @@ public class Chip8 {
         opcode.assembly = String.format("LD B V%01X", opcode.vx);
 
         // Representacion decimal (centenas) en I
-        memory[I] = (opcode.vx/100);
+        memory[I] = (V[opcode.vx]/100);
 
         // Representacion decimal (decenas) en I+1
-        memory[I+1] = (opcode.vx/10)%10;
+        memory[I+1] = (V[opcode.vx]/10)%10;
 
         // Representacion decimal (unidades) en I+2
-        memory[I+2] = (opcode.vx%100)%10;
+        memory[I+2] = (V[opcode.vx]%100)%10;
 
         pc += 2;
     }
@@ -868,8 +874,8 @@ public class Chip8 {
         }
 
         // El interprete original del Chip-8, tras terminar esta operacion,
-        // se asigna I = I + X + 1 (Queda sujeto a pruebas)
-        I += V[opcode.vx]+1;
+        // se asigna I = I + X + 1
+        I += (opcode.vx + 1);
 
         pc += 2;
     }
@@ -889,8 +895,8 @@ public class Chip8 {
         }
 
         // El interprete original del Chip-8, tras terminar esta operacion,
-        // se asigna I = I + X + 1 (Queda sujeto a pruebas)
-        I += V[opcode.vx]+1;
+        // se asigna I = I + X + 1
+        I += (opcode.vx + 1);
 
         pc += 2;
     }
