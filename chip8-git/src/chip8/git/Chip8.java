@@ -84,7 +84,7 @@ public class Chip8 {
     // Bandera para marcar una accion en pantalla pendiente
     public boolean drawFlag;
 
-    // Arreglo de referencias de funciones
+    // Arreglos de referencias de metodos
     final private CicloChip8 tablaChip8[] = {
         this::ejecutar00,   this::ejecutar1NNN, this::ejecutar2NNN,
         this::ejecutar3XNN, this::ejecutar4XNN, this::ejecutar5XY0,
@@ -147,7 +147,7 @@ public class Chip8 {
             memory[512+i] = (buffer[i] & 0xFF); // Se convierte a Unsigned
         }
     }
-    
+
     public void setKeyPad(int[] keyBuffer) {
         System.arraycopy(keyBuffer, 0, key, 0, key.length);
     }
@@ -172,7 +172,7 @@ public class Chip8 {
             opcode.identificador
         );
 
-        // Debugg verbose
+        // Debugg: detalle de registros
         //imprimirDetalleChip();
     }
 
@@ -233,41 +233,23 @@ public class Chip8 {
         int _byte = opcode._byte;
 
         switch (_byte) {
-            case 0x0007:
-                ejecutarFX07();
-                break;
+            case 0x0007: ejecutarFX07(); break;
 
-            case 0x000A:
-                ejecutarFX0A();
-                break;
+            case 0x000A: ejecutarFX0A(); break;
 
-            case 0x0015:
-                ejecutarFX15();
-                break;
+            case 0x0015: ejecutarFX15(); break;
 
-            case 0x0018:
-                ejecutarFX18();
-                break;
+            case 0x0018: ejecutarFX18(); break;
 
-            case 0x001E:
-                ejecutarFX1E();
-                break;
+            case 0x001E: ejecutarFX1E(); break;
 
-            case 0x0029:
-                ejecutarFX29();
-                break;
+            case 0x0029: ejecutarFX29(); break;
 
-            case 0x0033:
-                ejecutarFX33();
-                break;
+            case 0x0033: ejecutarFX33(); break;
 
-            case 0x0055:
-                ejecutarFX55();
-                break;
+            case 0x0055: ejecutarFX55(); break;
 
-            case 0x0065:
-                ejecutarFX65();
-                break;
+            case 0x0065: ejecutarFX65(); break;
 
             default: opcodeUndefined();
         }
@@ -657,7 +639,7 @@ public class Chip8 {
         // Posicion x,y del sprite a dibujar
 	int x = V[opcode.vx];
 	int y = V[opcode.vy];
-	        
+
 	int pixel;
 
 	V[0xF] = 0;
@@ -673,23 +655,23 @@ public class Chip8 {
                 int masked_pixel = (pixel & (0x80 >> ejeX));
 
                 if(masked_pixel != 0){
-	            // Los valores posicionales x,y haran 
-	            // warp de valores tras superar 0x3F(63) y 0x1F(31) 
+	            // Los valores posicionales x,y haran
+	            // warp de valores tras superar 0x3F(63) y 0x1F(31)
 	            // respectivamente
-	                	
+
 	            // Solo se toman los 6 bits de la izq
 	            int cordenadaX = (x + ejeX) & 0x3F;
-	                	
+
 	            // Solo se toman los 5 bits de la izq
 	            int cordenadaY = (y + ejeY) & 0x1F;
-	                	
+
 	            // Si el pixel a pintar ya esta activo, se asigna 1 al
 	            // registro VF, normalmente usado para detectar colision
 	            //if(gfx[(x + ejeX + ((y + ejeY)*64))] == 1){
 	            if(gfx[(cordenadaX + ((cordenadaY)*64))] == 1){
 	                V[0xF] = 1;
 	            }
-	                	
+
 	            // El nuevo valor en pantalla se define con una
 	            // operacion XOR
 	            //gfx[(x + ejeX + ((y + ejeY) * 64))] ^= 1;

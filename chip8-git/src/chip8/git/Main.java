@@ -73,20 +73,16 @@ public class Main {
         // Ciclo principal
         while(CPU_ACTIVO){
             myChip.emularCiclo();
-            
+
             // Polling del keypad
                 //TODO
-            
-            
+
             // Render
             if(myChip.drawFlag){
                 myChip.textRender();
                 myChip.drawFlag = false;
             }
             scanner.nextInt();
-
         }
-
     }
-
 }

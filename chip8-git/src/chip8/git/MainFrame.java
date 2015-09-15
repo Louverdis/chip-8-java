@@ -11,17 +11,17 @@ import java.util.logging.Logger;
 public class MainFrame extends Thread {
     private Chip8 chip8;
     private ChipFrame frame;
-	
-    public MainFrame() throws IOException {
+
+    public MainFrame(String archivo) throws IOException {
         chip8 = new Chip8();
         chip8.init();
-        chip8.cargarJuego("MISSILE");
+        chip8.cargarJuego(archivo);
         frame = new ChipFrame(chip8);
     }
-    
+
     @Override
     public void run() {
-        //60 hz, 60 updates per second
+        //Ciclo de reloj objetivo: ~60 hz
         while(true) {
             chip8.setKeyPad(frame.getKeyBuffer());
             chip8.emularCiclo();
@@ -30,19 +30,22 @@ public class MainFrame extends Thread {
                 chip8.drawFlag = false;
             }
             try {
-                Thread.sleep(4);
-            } catch (InterruptedException e) {
-		//Unthrown exception
+                Thread.sleep(8);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainFrame.class.getName())
+                    .log(Level.SEVERE, null, ex);
             }
         }
     }
+
     public static void main(String[] args) {
-	MainFrame main;
+        MainFrame main;
         try {
-            main = new MainFrame();
+            main = new MainFrame(args[0]);
             main.start();
         } catch (IOException ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }	
+            Logger.getLogger(MainFrame.class.getName())
+                .log(Level.SEVERE, null, ex);
+        }
     }
 }
